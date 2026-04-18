@@ -1,8 +1,10 @@
 import type { UserData, UserPayload } from '../schemas/auth';
 import type { APIResponse } from '../schemas/common';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export async function register(email: string, password: string, displayName: string | null = null): Promise<UserPayload | null> {
-    const response = await fetch('/api/users', {
+    const response = await fetch(`${BACKEND_URL}/users`, {
         method: 'POST',
         body: JSON.stringify({
             email: email,
@@ -24,7 +26,7 @@ export async function register(email: string, password: string, displayName: str
 }
 
 export async function login(email: string, password: string): Promise<UserPayload | null> {
-    const response = await fetch('/api/sessions', {
+    const response = await fetch(`${BACKEND_URL}/sessions`, {
         method: 'POST',
         body: JSON.stringify({
             email: email,
@@ -45,7 +47,7 @@ export async function login(email: string, password: string): Promise<UserPayloa
 }
 
 export async function getMe(token: string): Promise<UserData | null> {
-    const response = await fetch('/api/users/me', {
+    const response = await fetch(`${BACKEND_URL}/users/me`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${token}`
@@ -65,7 +67,7 @@ export async function getMe(token: string): Promise<UserData | null> {
 }
 
 export async function updatePassword(token: string, oldPassword: string, newPassword: string): Promise<boolean> {
-    const response = await fetch('/api/users/me/password', {
+    const response = await fetch(`${BACKEND_URL}/users/me/password`, {
         method: 'PUT',
         headers: {
             'Authorization': `Bearer ${token}`,

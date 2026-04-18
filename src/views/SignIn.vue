@@ -19,11 +19,11 @@ const submit = () => {
         <form @submit.prevent="submit" novalidate>
             <div class="field">
                 <label for="email" class="sr-only">Email</label>
-                <input type="email" id="email" v-model="email" required placeholder="Email" />
+                <input type="email" id="email" name="email" v-model="email" required placeholder="Email" />
             </div>
             <div class="field">
                 <label for="password" class="sr-only">Password</label>
-                <input type="password" id="password" v-model="password" required placeholder="Password" />
+                <input type="password" id="password" name="password" v-model="password" required placeholder="Password" />
             </div>
             <button type="submit" class="primary">Sign In</button>
             <div class="links">
