@@ -1,11 +1,13 @@
 <script setup lang="ts">
 
 import { ref } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 
 const email = ref('');
 const code = ref('');
 const password = ref('');
 const confirmPassword = ref('');
+const authStore = useAuthStore();
 
 const sending = ref(false);
 const cooldown = ref(0);

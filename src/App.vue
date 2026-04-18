@@ -1,8 +1,8 @@
 <script setup lang="ts">
 
-import SignIn from './components/SignIn.vue';
-import SignUp from './components/SignUp.vue';
-import ResetPassword from './components/ResetPassword.vue';
+import SignIn from './views/SignIn.vue';
+import SignUp from './views/SignUp.vue';
+import ResetPassword from './views/ResetPassword.vue';
 
 </script>
 

@@ -1,18 +1,22 @@
 <script setup lang="ts">
+
 import { ref } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 
 const email = ref('');
 const password = ref('');
+const confirmPassword = ref('');
+const authStore = useAuthStore();
+
 const submit = () => {
-    // TODO: replace with real auth
-    console.log('sign in', email.value, password.value);
+    authStore.register(email.value, password.value, null);
 };
 
 </script>
 
 <template>
-    <div class="sign-in hero">
-        <p class="eyebrow">Welcome back</p>
+    <div class="sign-up hero">
+        <p class="eyebrow">Sign Up</p>
         <h2>English Learning</h2>
         <form @submit.prevent="submit" novalidate>
             <div class="field">
@@ -23,10 +27,14 @@ const submit = () => {
                 <label for="password" class="sr-only">Password</label>
                 <input type="password" id="password" v-model="password" required placeholder="Password" />
             </div>
-            <button type="submit" class="primary">Sign In</button>
+            <div class="field">
+                <label for="confirm-password" class="sr-only">Confirm Password</label>
+                <input type="password" id="confirm-password" v-model="confirmPassword" required placeholder="Confirm Password" />
+            </div>
+            <button type="submit" class="primary">Sign Up</button>
             <div class="links">
-                <RouterLink to="/sign-up">Sign Up</RouterLink>
-                <RouterLink to="/reset-password">Forgot Password?</RouterLink>
+                <span>Already have an account?</span>
+                <RouterLink to="/sign-in">Login</RouterLink>
             </div>
         </form>
     </div>
@@ -50,7 +58,7 @@ const submit = () => {
     color: #b4642a;
 }
 
-.sign-in {
+.sign-up {
     width: 320px;
     max-width: 92vw;
     color: #1e304f;
@@ -78,8 +86,6 @@ input[type="password"] {
     font-size: 14px;
     color: #102033;
     outline: none;
-
-    box-sizing: border-box;
 }
 
 input::placeholder {
@@ -102,7 +108,8 @@ input::placeholder {
 
 .links {
     display: flex;
-    justify-content: space-between;
+    gap: 1rem;
+    justify-content: center;
 }
 
 .links a {
@@ -127,5 +134,6 @@ input::placeholder {
     white-space: nowrap;
     border: 0;
 }
+
 </style>
 
