@@ -1,25 +1,32 @@
 <script setup lang="ts">
 
-import SignIn from './views/SignIn.vue';
-import SignUp from './views/SignUp.vue';
-import ResetPassword from './views/ResetPassword.vue';
+import { type Component, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import AuthLayout from './layouts/AuthLayout.vue';
+import MainLayout from './layouts/MainLayout.vue';
+
+const route = useRoute();
+
+const layouts: Record<string, Component> = {
+    AuthLayout,
+    MainLayout,
+}
+
+const layout = computed(() => {
+    const layoutName = route.meta.layout as string || 'MainLayout';
+    return layouts[layoutName];
+})
 
 </script>
 
 <template>
-    <div id="app">
+    <component :is="layout">
        <RouterView />
-    </div>
+    </component>
 </template>
 
 <style scoped>
 
-#app {
-    background-color: #f0f0f0;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+
 
 </style>

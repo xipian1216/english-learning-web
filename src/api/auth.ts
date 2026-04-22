@@ -6,6 +6,9 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export async function register(email: string, password: string, displayName: string | null = null): Promise<UserPayload | null> {
     const response = await fetch(`${BACKEND_URL}/users`, {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
             email: email,
             password: password,

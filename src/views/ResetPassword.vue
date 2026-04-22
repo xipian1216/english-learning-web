@@ -74,7 +74,7 @@ const submit = () => {
         <form @submit.prevent="submit" novalidate>
             <div class="field">
                 <label for="email" class="sr-only">Email</label>
-                <input type="email" id="email" v-model="email" required placeholder="Email" />
+                <input type="email" id="email" v-model="email" required placeholder="Email" autocomplete="email" />
             </div>
 
             <div class="field code-row">
@@ -90,11 +90,11 @@ const submit = () => {
 
             <div class="field">
                 <label for="password" class="sr-only">Password</label>
-                <input type="password" id="password" v-model="password" required placeholder="Password" />
+                <input type="password" id="password" v-model="password" required placeholder="Password" autocomplete="new-password" />
             </div>
             <div class="field">
                 <label for="confirm-password" class="sr-only">Confirm Password</label>
-                <input type="password" id="confirm-password" v-model="confirmPassword" required placeholder="Confirm Password" />
+                <input type="password" id="confirm-password" v-model="confirmPassword" required placeholder="Confirm Password" autocomplete="new-password" />
             </div>
             <button type="submit" class="primary">Reset Password</button>
             <div class="links">
