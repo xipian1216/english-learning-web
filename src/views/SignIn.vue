@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const email = ref('');
 const password = ref('');
 const authStore = useAuthStore();
+const router = useRouter();
+const route = useRoute();
 
-const submit = () => {
-    authStore.login(email.value, password.value);
+const submit = async () => {
+    await authStore.signIn(email.value, password.value);
+
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
+    await router.replace(redirect);
 };
 
 </script>
@@ -19,7 +25,7 @@ const submit = () => {
         <form @submit.prevent="submit" novalidate>
             <div class="field">
                 <label for="email" class="sr-only">Email</label>
-                <input type="email" id="email" name="email" v-model="email" required placeholder="Email" autocomplete="email"" />
+                <input type="email" id="email" name="email" v-model="email" required placeholder="Email" autocomplete="email" />
             </div>
             <div class="field">
                 <label for="password" class="sr-only">Password</label>

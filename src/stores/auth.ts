@@ -1,79 +1,173 @@
-import { defineStore } from "pinia";
-import { computed, ref } from "vue";
-import { register, login, getMe, updatePassword } from "@/api/auth";
-import type { UserData } from "@/schemas/auth";
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
+import {
+  getMe,
+  login,
+  register,
+  resetPasswordByCode,
+  sendResetPasswordCode,
+  updatePassword,
+} from '@/api/auth'
+import type { UserData, UserPayload } from '@/schemas/auth'
 
-export const useAuthStore = defineStore("auth", () => {
+const AUTH_STORAGE_KEY = 'auth_state'
 
-    const curAccessToken = ref<string | null>(localStorage.getItem("access_token"));
-    const curTokenType = ref<string | null>(localStorage.getItem("token_type"));
-    const curExpiresIn = ref<number | null>(localStorage.getItem("expires_in") ? parseInt(localStorage.getItem("expires_in") as string) : null);
-    const curUser = ref<UserData | null>(null);
+interface AuthSession {
+  accessToken: string | null
+  tokenType: string | null
+  expiresIn: number | null
+  user: UserData | null
+}
 
-    const getAccessToken = computed(() => curAccessToken.value);
-    const getTokenType = computed(() => curTokenType.value);
-    const getExpiresIn = computed(() => curExpiresIn.value);
-    const getUser = computed(() => curUser.value);
+const createEmptySession = (): AuthSession => ({
+  accessToken: null,
+  tokenType: null,
+  expiresIn: null,
+  user: null,
+})
 
-    const setAuth = (accessToken: string, tokenType: string, expiresIn: number) => {
-        curAccessToken.value = accessToken;
-        curTokenType.value = tokenType;
-        curExpiresIn.value = expiresIn
-        localStorage.setItem("access_token", accessToken);
-        localStorage.setItem("token_type", tokenType);
-        localStorage.setItem("expires_in", expiresIn.toString());
-    };
+const readPersistedAuthState = (): AuthSession => {
+  const fallbackState = createEmptySession()
 
-    const callRegister = async (email: string, password: string, displayName: string | null = null) => {
-        const user = await register(email, password, displayName);
-        if (user) {
-            setAuth(user.access_token, user.token_type, user.expires_in);
-        }
-    };
+  if (typeof window === 'undefined') {
+    return fallbackState
+  }
 
-    const callLogin = async (email: string, password: string) => {
-        const user = await login(email, password);
-        if (user) {
-            setAuth(user.access_token, user.token_type, user.expires_in);
-        }
-    };
+  const rawState = window.localStorage.getItem(AUTH_STORAGE_KEY)
 
-    const callGetMe = async () => {
-        const user = await getMe(curAccessToken.value ?? '');
-        if (user) {
-            curUser.value = user;
-        }
-    };
+  if (!rawState) {
+    return fallbackState
+  }
 
-    const callUpdatePassword = async (oldPassword: string, newPassword: string) => {
-        const success = await updatePassword(curAccessToken.value ?? '', oldPassword, newPassword);
-        return success;
-    };
-
-    const logout = async () => {
-        curAccessToken.value = null;
-        curTokenType.value = null;
-        curExpiresIn.value = null;
-        curUser.value = null;
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("token_type");
-        localStorage.removeItem("expires_in");
-    };
+  try {
+    const parsedState = JSON.parse(rawState) as Partial<AuthSession>
 
     return {
-        access_token: curAccessToken,
-        token_type: curTokenType,
-        expires_in: curExpiresIn,
-        user: curUser,
-        setAuth,
-        register: callRegister,
-        login: callLogin,
-        getMe: callGetMe,
-        updatePassword: callUpdatePassword,
-        logout,
-        getAccessToken,
-        getTokenType,
-        getExpiresIn,
-        getUser
-    };
-});
+      accessToken: parsedState.accessToken ?? null,
+      tokenType: parsedState.tokenType ?? null,
+      expiresIn: parsedState.expiresIn ?? null,
+      user: parsedState.user ?? null,
+    }
+  } catch {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY)
+    return fallbackState
+  }
+}
+
+const writePersistedAuthState = (session: AuthSession) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session))
+}
+
+const clearPersistedAuthState = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.removeItem(AUTH_STORAGE_KEY)
+}
+
+const createSessionFromPayload = (payload: UserPayload): AuthSession => ({
+  accessToken: payload.access_token,
+  tokenType: payload.token_type,
+  expiresIn: payload.expires_in,
+  user: payload.user_data,
+})
+
+export const useAuthStore = defineStore('auth', () => {
+  const session = ref<AuthSession>(readPersistedAuthState())
+
+  const accessToken = computed(() => session.value.accessToken)
+  const tokenType = computed(() => session.value.tokenType)
+  const expiresIn = computed(() => session.value.expiresIn)
+  const user = computed(() => session.value.user)
+  const isAuthenticated = computed(() => Boolean(session.value.accessToken))
+
+  const setSession = (nextSession: AuthSession) => {
+    session.value = nextSession
+    writePersistedAuthState(nextSession)
+  }
+
+  const updateUser = (nextUser: UserData | null) => {
+    session.value = {
+      ...session.value,
+      user: nextUser,
+    }
+
+    writePersistedAuthState(session.value)
+  }
+
+  const clearSession = () => {
+    session.value = createEmptySession()
+    clearPersistedAuthState()
+  }
+
+  const signUp = async (email: string, password: string, displayName: string | null = null) => {
+    const payload = await register(email, password, displayName)
+
+    if (payload) {
+      setSession(createSessionFromPayload(payload))
+    }
+  }
+
+  const signIn = async (email: string, password: string) => {
+    const payload = await login(email, password)
+
+    if (payload) {
+      setSession(createSessionFromPayload(payload))
+    }
+  }
+
+  const fetchCurrentUser = async () => {
+    if (!session.value.accessToken) {
+      return null
+    }
+
+    const currentUser = await getMe(session.value.accessToken)
+
+    if (currentUser) {
+      updateUser(currentUser)
+    }
+
+    return currentUser
+  }
+
+  const changePassword = async (oldPassword: string, newPassword: string) => {
+    if (!session.value.accessToken) {
+      throw new Error('Not authenticated')
+    }
+
+    return await updatePassword(session.value.accessToken, oldPassword, newPassword)
+  }
+
+  const requestPasswordResetCode = async (email: string) => {
+    return await sendResetPasswordCode(email)
+  }
+
+  const resetPasswordWithCode = async (email: string, code: string, password: string) => {
+    return await resetPasswordByCode(email, code, password)
+  }
+
+  const signOut = () => {
+    clearSession()
+  }
+
+  return {
+    session,
+    accessToken,
+    tokenType,
+    expiresIn,
+    user,
+    isAuthenticated,
+    signUp,
+    signIn,
+    fetchCurrentUser,
+    changePassword,
+    requestPasswordResetCode,
+    resetPasswordWithCode,
+    signOut,
+  }
+})

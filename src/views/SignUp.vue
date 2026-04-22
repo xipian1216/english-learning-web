@@ -1,15 +1,18 @@
 <script setup lang="ts">
 
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const authStore = useAuthStore();
+const router = useRouter();
 
-const submit = () => {
-    authStore.register(email.value, password.value, null);
+const submit = async () => {
+    await authStore.signUp(email.value, password.value, null);
+    await router.replace('/');
 };
 
 </script>

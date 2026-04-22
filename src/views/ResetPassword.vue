@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const email = ref('');
@@ -8,6 +9,7 @@ const code = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const authStore = useAuthStore();
+const router = useRouter();
 
 const sending = ref(false);
 const cooldown = ref(0);
@@ -27,10 +29,8 @@ const sendCode = async () => {
 
     sending.value = true;
 
-    // simulate API call
-    await new Promise((res) => setTimeout(res, 800));
+    await authStore.requestPasswordResetCode(email.value);
 
-    // start 60s cooldown
     cooldown.value = 60;
     sending.value = false;
 
@@ -46,7 +46,7 @@ const sendCode = async () => {
     }, 1000) as unknown as number;
 };
 
-const submit = () => {
+const submit = async () => {
     if (!code.value) {
         alert('请输入验证码');
         return;
@@ -60,10 +60,17 @@ const submit = () => {
         return;
     }
 
-    // TODO: call reset password API
-    console.log('reset password', { email: email.value, code: code.value, password: password.value });
-    alert('密码已重置（模拟）');
+    await authStore.resetPasswordWithCode(email.value, code.value, password.value);
+    alert('密码已重置');
+    await router.replace('/sign-in');
 };
+
+onBeforeUnmount(() => {
+    if (timer) {
+        clearInterval(timer);
+        timer = undefined;
+    }
+});
 
 </script>
 

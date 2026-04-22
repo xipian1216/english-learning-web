@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,6 +29,25 @@ const router = createRouter({
       meta: { layout: 'MainLayout', requireAuth: true }
     }
   ],
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+  const requiresAuth = Boolean(to.meta.requireAuth)
+  const isAuthenticated = authStore.isAuthenticated
+
+  if (requiresAuth && !isAuthenticated) {
+    return {
+      path: '/sign-in',
+      query: to.path === '/' ? {} : { redirect: to.fullPath },
+    }
+  }
+
+  if (!requiresAuth && isAuthenticated && to.path === '/sign-in') {
+    return '/'
+  }
+
+  return true
 })
 
 export default router
